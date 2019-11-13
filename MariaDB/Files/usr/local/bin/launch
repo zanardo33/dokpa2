@@ -1,0 +1,62 @@
+#!/bin/sh
+
+if [ ! -d "/var/lib/mysql/test" ]; then
+  mysql_install_db --user=mysql --datadir=/var/lib/mysql
+  echo "Install User Database"
+  echo -n "  Launch mariadb server ...  "
+  exec mysqld_safe & 2> /dev/null
+  echo "OK"
+  echo -n "  Add mariadb-client ...     " 
+  apk add mariadb-client > /dev/null
+  echo "OK"
+  if [ "$MYSQL_ROOT_PASSWORD" = "" ]; then
+    ROOTPASS="$HOSTNAME"
+  else
+    ROOTPASS="$MYSQL_ROOT_PASSWORD"
+  fi
+  echo -n "  Assigning $HOSTNAME as mysql_root_password  "
+  /usr/bin/mysqladmin -u root password "$ROOTPASS"
+  echo "OK"
+
+  if [ "$MYSQL_DATABASE" = "" ]; then
+    DB="Default"
+  else
+    DB="$MYSQL_DATABASE"	  
+  fi
+  if [ "$MYSQL_USER" = "" ]; then
+    USER="Default"
+  else
+    USER="$MYSQL_USER"	  
+  fi
+  if [ "$MYSQL_PASSWORD" = "" ]; then
+    PASSWD="$HOSTNAME"
+  else
+    PASSWD="$MYSQL_PASSWORD"
+  fi
+  echo -n "  Creating Database $DB     "
+  echo "CREATE DATABASE $DB;" | mysql -u root --password="$ROOTPASS"
+  echo "OK"  
+  echo -n "  Granting full rights on $USER with password ($PASSWD) on $DB  "
+  echo "GRANT ALL PRIVILEGES ON $DB.* TO '$USER'@'%' IDENTIFIED BY '$PASSWD';" | mysql -u root --password="$ROOTPASS"
+  echo "OK"
+  echo -n "  Dropping test database    "
+  echo "DROP DATABASE test;" | mysql -u root --password="$ROOTPASS"
+  echo "OK"
+  echo -n "  Remove mariadb-client     "
+  apk del mariadb-client > /dev/null
+  echo "OK"
+  echo -n "  Cleaning                  "
+  kill -TERM $(pidof mysqld)
+  # Supprimer les variables d'environnement
+  unset MYSQL_DATABASE
+  unset MYSQL_PASSWORD
+  unset MYSQL_USER
+  unset PASSWD
+  unset MYSQL_ROOT_PASSWORD
+  unset ROOTPASS
+  sleep 5
+  echo "OK"
+fi
+
+echo "Starting Mariadb server..."
+exec mysqld --user=mysql --datadir=/var/lib/mysql --console
