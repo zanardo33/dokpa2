@@ -1,0 +1,8 @@
+#!/bin/bash
+
+apt-get install nfs-kernel-server -y
+
+chmod -R 777 /Data/Nfs
+echo "/Data/Nfs *(rw,no_subtree_check)" > /etc/exports
+
+service nfs-server restart
