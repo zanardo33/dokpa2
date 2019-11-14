@@ -1,0 +1,19 @@
+version: '3'
+services:
+
+  NextApp:
+    image: nextcloud
+    volumes:
+      - /Data/Nfs/Apps/NextApp:/var/www/html
+    ports: 
+      - 9087:80
+
+  NextDb:
+    image: easylinux/kubernetes:nginx
+    volumes:
+      - /Data/Nfs/Apps/NextDb:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE: NextCloud
+      - MYSQL_USER: NextCloud
+      - MYSQL_PASSWORD: Secr3t
+

@@ -1,0 +1,29 @@
+version: '3'
+services:
+
+  Portainer:
+    image: portainer/portainer:1.22.2
+    command: -H tcp://tasks.PortAgent:9001 --tlsskipverify
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+    ports: 
+      - 9000:9000
+    volumes:
+      - /Data/App/Portainer:/data
+
+  PortAgent:
+    image: portainer/agent
+    environment:
+      AGENT_CLUSTER_ADDR: tasks.PortAgent
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.platform.os == linux]
+
